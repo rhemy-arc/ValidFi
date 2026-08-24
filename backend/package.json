@@ -48,6 +48,7 @@
     "groq-sdk": "^0.3.0",
     "ioredis": "^5.3.2",
     "ipfs-http-client": "^60.0.0",
+    "joi": "^18.2.5",
     "jsonwebtoken": "^9.0.0",
     "multer": "^1.4.5-lts.1",
     "nestjs-pino": "^4.6.1",
