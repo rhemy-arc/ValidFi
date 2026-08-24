@@ -1,0 +1,24 @@
+{
+  "default_branch": "main",
+  "branches": [
+    "feat/credential-loading-states",
+    "feat/env-validation",
+    "main",
+    "origin",
+    "rema-adzer/grantfox"
+  ],
+  "parent": {
+    "feat/credential-loading-states": "main",
+    "feat/env-validation": "main",
+    "main": null,
+    "origin": "main",
+    "rema-adzer/grantfox": "main"
+  },
+  "order": [
+    "main",
+    "feat/credential-loading-states",
+    "feat/env-validation",
+    "origin",
+    "rema-adzer/grantfox"
+  ]
+}
