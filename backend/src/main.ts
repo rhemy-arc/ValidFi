@@ -1,27 +1,24 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
-import { AllExceptionsFilter } from './common/filters/http-exception.filter';
+import { TypedConfigService } from './config/config.service';
 import { StructuredLoggerService } from './common/logger/logger.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  const configService = app.get(ConfigService);
+  const configService = app.get(TypedConfigService);
   const logger = app.get(StructuredLoggerService);
 
   app.useLogger(logger);
 
-  const port = configService.get<number>('PORT') ?? 3001;
-  const apiPrefix = configService.get<string>('API_PREFIX') ?? 'api/v1';
-  const nodeEnv = configService.get<string>('NODE_ENV') ?? 'development';
+  const { port, apiPrefix, nodeEnv } = configService;
 
   app.setGlobalPrefix(apiPrefix);
 
   app.enableCors({
-    origin: configService.get<string>('CORS_ORIGIN') ?? true,
+    origin: true,
     credentials: true,
   });
 
@@ -33,7 +30,7 @@ async function bootstrap() {
     }),
   );
 
-  if (nodeEnv !== 'production') {
+  if (!configService.isProduction) {
     const config = new DocumentBuilder()
       .setTitle('ValidFi API')
       .setDescription(
@@ -64,7 +61,7 @@ async function bootstrap() {
     apiPrefix: `http://localhost:${port}/${apiPrefix}`,
     environment: nodeEnv,
   });
-  if (nodeEnv !== 'production') {
+  if (!configService.isProduction) {
     logger.log(`Swagger docs available`, {
       docsUrl: `http://localhost:${port}/docs`,
     });

@@ -1,11 +1,14 @@
 import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CacheModule } from '@nestjs/cache-manager';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { redisStore } from 'cache-manager-redis-store';
+import { AppConfigModule } from './config/config.module';
+import { TypedConfigService } from './config/config.service';
+import { EnvironmentVariables } from './config/env.validation';
 import { IdentityModule } from './identity/identity.module';
 import { VerificationModule } from './verification/verification.module';
 import { AccessControlModule } from './access-control/access-control.module';
@@ -31,43 +34,41 @@ import { RequestContextMiddleware } from './common/logger/logger.middleware';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-    }),
+    AppConfigModule,
     LoggerModule,
     TypeOrmModule.forRootAsync({
-      imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => ({
+      imports: [AppConfigModule],
+      useFactory: (configService: ConfigService<EnvironmentVariables, true>) => ({
         type: 'postgres',
-        host: configService.get('DB_HOST'),
-        port: configService.get('DB_PORT'),
-        username: configService.get('DB_USERNAME'),
-        password: configService.get('DB_PASSWORD'),
-        database: configService.get('DB_DATABASE'),
+        host: configService.get('DB_HOST', { infer: true }),
+        port: configService.get('DB_PORT', { infer: true }),
+        username: configService.get('DB_USERNAME', { infer: true }),
+        password: configService.get('DB_PASSWORD', { infer: true }),
+        database: configService.get('DB_DATABASE', { infer: true }),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
-        synchronize: configService.get('NODE_ENV') === 'development',
-        logging: configService.get('NODE_ENV') === 'development',
+        synchronize: configService.get('NODE_ENV', { infer: true }) === 'development',
+        logging: configService.get('NODE_ENV', { infer: true }) === 'development',
       }),
       inject: [ConfigService],
     }),
     ThrottlerModule.forRootAsync({
-      imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => [
+      imports: [AppConfigModule],
+      useFactory: (configService: ConfigService<EnvironmentVariables, true>) => [
         {
-          ttl: configService.get<number>('THROTTLE_TTL') ?? 60000,
-          limit: configService.get<number>('THROTTLE_LIMIT') ?? 60,
+          ttl: configService.get('THROTTLE_TTL', { infer: true }),
+          limit: configService.get('THROTTLE_LIMIT', { infer: true }),
         },
       ],
       inject: [ConfigService],
     }),
     CacheModule.registerAsync({
-      imports: [ConfigModule],
+      imports: [AppConfigModule],
       // @ts-ignore
-      useFactory: (configService: ConfigService) => ({
+      useFactory: (configService: ConfigService<EnvironmentVariables, true>) => ({
         store: redisStore,
-        host: configService.get('REDIS_HOST'),
-        port: configService.get('REDIS_PORT'),
-        password: configService.get('REDIS_PASSWORD'),
+        host: configService.get('REDIS_HOST', { infer: true }),
+        port: configService.get('REDIS_PORT', { infer: true }),
+        password: configService.get('REDIS_PASSWORD', { infer: true }),
         ttl: 3600,
       }),
       inject: [ConfigService],
